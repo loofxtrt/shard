@@ -22,13 +22,17 @@ def run():
             )
 
 def generate_yaml_config(obsidian_root: Path):
+    # obter os nomes de todos os vaults a partir de um nível do obsidian root
+    # o obsidian root deve ser o diretório pai de todos os vaults
     vaults = []
     for v in obsidian_root.iterdir():
+        # eliminando arquivos ou diretórios ocultos
         if not v.is_dir() or v.name.startswith("."):
             continue
             
         vaults.append(v.name)
 
+    # criar o dicionário vazio pra cada vault
     data = {}
     for this_vault in vaults:
         options = {
@@ -37,6 +41,7 @@ def generate_yaml_config(obsidian_root: Path):
         }
         data[this_vault] = options
 
+    # escrever o arquivo yaml final
     with open("config.yaml", "w") as f:
         yaml.dump(data, f)
 
