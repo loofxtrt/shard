@@ -16,6 +16,8 @@ def apply_snippet(target_vault: Path, css_file: Path):
         dst=dir_snippets
     )
 
+    print(dir_snippets)
+
 def apply_theme(target_vault: Path, theme_dir: Path):
     if not theme_dir.is_dir():
         print("tema inválido")
