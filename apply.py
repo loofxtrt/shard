@@ -18,19 +18,25 @@ def apply_snippet(target_vault: Path, css_file: Path):
         dst=dir_snippets
     )
 
-    print(dir_snippets)
-
 def apply_theme(target_vault: Path, theme_dir: Path):
     # copiar o diretório de um tema pra um vault
     # ignorando temas que não são diretórios ou não têm manifesto
     if not theme_dir.is_dir() or not Path(theme_dir / "manifest.json").exists():
         print("tema inválido")
-        return
-    
+        return    
+
+    # montar o caminho do diretório de forma que ele seja criado
+    # e não substituído pelo copytree
     dir_dot = get_dot_obsidian(target_vault)
     dir_themes = dir_dot / "themes"
 
-    shutil.copy2(
+    # sem isso, o copytree tentaria substituir a pasta .obsidian/themes
+    # com a pasta do tema, ao invés de só adicionar ela
+    # isso cria algo como .obsidian/themes/nome-do-tema
+    destination = dir_themes / theme_dir.name
+
+    shutil.copytree(
         src=theme_dir,
-        dst=dir_themes
+        dst=destination,
+        dirs_exist_ok=True # sobreescrever caso o tema já exista
     )
