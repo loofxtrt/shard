@@ -14,7 +14,7 @@ def run(obsidian_root: Path, snippets_source, themes_source):
     with open("config.yaml", "r") as f:
         data = yaml.safe_load(f)
 
-    # iterar por cada vault presente no arquivo,
+    # iterar pelo nome de cada vault presente no arquivo,
     # aplicando os temas, plugins e snippets especificados
     for vault_name, vault_config in data.items():
         # montar o caminho do vault atual
@@ -38,19 +38,29 @@ def run(obsidian_root: Path, snippets_source, themes_source):
             "showRibbon": True
         }
         
-        # snippets
+        # aplicar os snippets e adiciona-los a config
         for snippet_name in vault_config["snippets"] or []:
-            # aplicar os snippets e gerar a config
+            # aplicar todos os snippets caso a lista só tenha o "all" como valor
+            if snippet_name == "all":
+                for css_file in snippets_source.iterdir():
+                    if not css_file.is_file() or not css_file.suffix == ".css":
+                        continue
+
+                    data_appearance["enabledCssSnippets"].append(css_file.name.replace(".css", ""))
+                    apply.apply_snippet(path_current_vault, css_file)
+                    
+                continue
+
             # IMPORTANTE: no appearance.json, o snippet não deve ter .css no final
-            data_appearance["enabledCssSnippets"].append(
-                snippet_name.replace(".css", "")
-            )
+            data_appearance["enabledCssSnippets"].append(snippet_name.replace(".css", ""))
             apply.apply_snippet(path_current_vault, snippets_source / snippet_name)
 
-        # temas (com enumerate pra saber qual aplicar)
+        # aplicar os temas e adiciona-los a config
+        # (com enumerate pra saber qual ativar)
         for index, theme_name in enumerate(vault_config["themes"] or []):
-            # aplicar todos os temas e gerar a config caso ele seja o primeiro da lista
-            if index == 0: data_appearance["cssTheme"] = theme_name
+            # caso o tema seja o primeiro da lista, ele vai ser o ativo por padrão
+            if index == 0:
+                data_appearance["cssTheme"] = theme_name
             apply.apply_theme(path_current_vault, themes_source / theme_name)
         
         # escrever os arquivos de configuração do obsidian pro vault
@@ -91,5 +101,4 @@ def generate_yaml_config(obsidian_root: Path):
         yaml.dump(data, f)
 
 #generate_yaml_config(obsidian_root=ALL_VAULTS)
-
 run(obsidian_root=TEST_VAULTS, snippets_source=ALL_SNIPPETS, themes_source=ALL_THEMES)
