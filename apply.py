@@ -2,7 +2,11 @@ import shutil
 from pathlib import Path
 
 def get_dot_obsidian(vault_dir: Path):
-    # obter o diretório .obsidian de um vault
+    """
+    obter o diretório .obsidian de um vault  
+    é nesse diretório que estão os subdirs snippets, themes e arquivos como app.json etc.
+    """
+
     # retornar diretóro caso o path passado já seja um .obsidian
     if vault_dir.name == ".obsidian":
         return vault_dir
@@ -40,7 +44,10 @@ def get_sub_dot(vault_dir: Path, sub_dir_name: str):
     return sub_dot
 
 def apply_snippet(target_vault: Path, css_file: Path):
-    # copiar um arquivo css pro diretório de snippets de um vault
+    """
+    copiar um arquivo css pro diretório de snippets de um vault
+    """
+    
     dir_snippets = get_sub_dot(target_vault, "snippets")
     if not dir_snippets:
         return
@@ -53,8 +60,11 @@ def apply_snippet(target_vault: Path, css_file: Path):
     print(f"{target_vault.name}: snippet {css_file.name} aplicado")
 
 def apply_theme(target_vault: Path, theme_dir: Path):
-    # copiar o diretório de um tema pra um vault
-    # ignorando temas que não são diretórios ou não têm manifesto
+    """
+    copiar o diretório de um tema pra um vault
+    """
+
+    # ignorar temas que não são diretórios ou não têm manifesto
     if not theme_dir.is_dir() or not Path(theme_dir / "manifest.json").exists():
         print("tema inválido")
         return    
