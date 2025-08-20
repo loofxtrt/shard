@@ -6,3 +6,4 @@ obsidian-backup/*
 data
 /data
 /data/*
+__pycache__
