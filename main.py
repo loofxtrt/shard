@@ -1,5 +1,6 @@
 import yaml
 import json
+import shutil
 from pathlib import Path
 
 import apply
@@ -117,7 +118,7 @@ def apply_all_plugins(full_vault_path: Path, vault_config: list, plugins_source:
         de onde a função vai pegar os temas pra copiar  
       
     @param data_community_plugins_instance  
-        cópia do array que representa esse arquivo de configuração, copiado pela função run
+        cópia do array que representa esse arquivo de configuração, copiado pela função run  
     """
 
     plugins = vault_config.get("plugins") or []
@@ -125,7 +126,7 @@ def apply_all_plugins(full_vault_path: Path, vault_config: list, plugins_source:
         data_community_plugins_instance.append(p_name)
         apply.apply_plugin(full_vault_path, plugins_source / p_name)
 
-def run(obsidian_root: Path, plugins_source: Path, themes_source: Path, all_snippets_source: Path, special_snippets_source: Path):
+def run(obsidian_root: Path, plugins_source: Path, themes_source: Path, all_snippets_source: Path, special_snippets_source: Path, make_backup: bool = True):
     """
     função principal que lê o arquivo yaml de configuração dos vaults  
     e chama outras funções correspondentes as configs encontradas  
@@ -140,8 +141,17 @@ def run(obsidian_root: Path, plugins_source: Path, themes_source: Path, all_snip
     @param special_snippets_source  
         de onde a func deve pegar os snippets específicos de vaults  
         os .css desse diretório devem sempre começar com o nome exato do diretório do vault  
-        ex: pro main-vault, main-vault_account-card.css
+        ex: pro main-vault, main-vault_account-card.css  
+      
+    @param make_backup  
+        copiar ou não o obsidian_root antes de aplicar as mudanças
     """
+
+    # fazer backup caso a flag seja true
+    if make_backup:
+        print(f"shard: backup iniciado")
+        destination = Path(f"./obsidian-backup")
+        shutil.copytree(src=obsidian_root, dst=destination, dirs_exist_ok=True)
 
     # ler o arquivo de configuração
     with open("config.yaml", "r") as f:

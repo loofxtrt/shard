@@ -98,7 +98,7 @@ def apply_plugin(target_vault: Path, plugin_dir: Path):
 
     # ignorar plugins que não são diretórios ou não têm manifesto
     if not plugin_dir.is_dir() or not Path(plugin_dir / "manifest.json").exists():
-        print("plugins inválido")
+        print(f"{plugin_dir.name} plugin inválido")
         return
 
     # montar o caminho do diretório e copiar
