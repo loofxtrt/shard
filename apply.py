@@ -47,6 +47,9 @@ def apply_snippet(target_vault: Path, css_file: Path):
     """
     copiar um arquivo css pro diretório de snippets de um vault
     """
+
+    if not css_file.exists():
+        return
     
     dir_snippets = get_sub_dot(target_vault, "snippets")
     if not dir_snippets:
