@@ -1,0 +1,120 @@
+{
+  "biggerIcons": "mobile",
+  "clickableIcons": "desktop",
+  "showAllFileIcons": false,
+  "showAllFolderIcons": false,
+  "minimalFolderIcons": false,
+  "showItemName": "desktop",
+  "biggerSearchResults": "mobile",
+  "maxSearchResults": 50,
+  "colorPicker1": "list",
+  "colorPicker2": "rgb",
+  "uncolorHover": false,
+  "uncolorDrag": false,
+  "uncolorSelect": false,
+  "uncolorQuick": false,
+  "rememberDeletedItems": false,
+  "dialogState": {
+    "iconMode": true,
+    "emojiMode": false,
+    "rulePage": "folder"
+  },
+  "appIcons": {},
+  "tabIcons": {},
+  "fileIcons": {},
+  "bookmarkIcons": {},
+  "tagIcons": {},
+  "propertyIcons": {},
+  "ribbonIcons": {},
+  "fileRules": [],
+  "folderRules": [
+    {
+      "id": "7yUa4",
+      "name": "no-sub-directories",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "tree",
+          "operator": "!contains",
+          "value": "/"
+        },
+        {
+          "source": "icon",
+          "operator": "!hasValue"
+        },
+        {
+          "source": "name",
+          "operator": "!startsWith",
+          "value": "_"
+        }
+      ],
+      "enabled": true,
+      "icon": "lucide-folder"
+    },
+    {
+      "id": "H5w7d",
+      "name": "with-sub-directories",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "tree",
+          "operator": "contains",
+          "value": "/"
+        },
+        {
+          "source": "icon",
+          "operator": "!hasValue"
+        },
+        {
+          "source": "name",
+          "operator": "!startsWith",
+          "value": "_"
+        }
+      ],
+      "enabled": true,
+      "icon": "lucide-folders"
+    },
+    {
+      "id": "SB88T",
+      "name": "attachments",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "name",
+          "operator": "is",
+          "value": "_attachments"
+        }
+      ],
+      "enabled": true,
+      "icon": "link-glyph"
+    },
+    {
+      "id": "LPBxi",
+      "name": "archive",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "name",
+          "operator": "is",
+          "value": "_archive"
+        }
+      ],
+      "enabled": true,
+      "icon": "lucide-archive"
+    },
+    {
+      "id": "5cu3u",
+      "name": "icons",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "name",
+          "operator": "is",
+          "value": "_icons"
+        }
+      ],
+      "enabled": true,
+      "icon": "lucide-traffic-cone"
+    }
+  ]
+}

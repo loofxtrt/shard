@@ -12,6 +12,11 @@ ALL_PLUGINS = Path("/mnt/seagate/obsidian-central/plugins/")
 ALL_VAULTS = Path("/mnt/seagate/obsidian-vaults/")
 TEST_VAULTS = Path("/mnt/seagate/obsidiadididn-tests/")
 
+LOCAL_DATA = Path("./local-data")
+YAML_CONFIG = LOCAL_DATA / "config.yaml"
+
+PERSISTENT_DATA = Path("./persistent-data")
+
 # gerar os dicionários que depois serão convertidos em configs json pro vault
 DEFAULT_APP = {
     "readableLineLength": True, # concentrar o conteúdo no centro
@@ -126,10 +131,13 @@ def apply_all_plugins(full_vault_path: Path, vault_config: list, plugins_source:
         data_community_plugins_instance.append(p_name)
         apply.apply_plugin(full_vault_path, plugins_source / p_name)
 
-def run(obsidian_root: Path, plugins_source: Path, themes_source: Path, all_snippets_source: Path, special_snippets_source: Path, make_backup: bool = True):
+def run(yaml_config_path: Path, obsidian_root: Path, plugins_source: Path, themes_source: Path, all_snippets_source: Path, special_snippets_source: Path, make_backup: bool = True):
     """
     função principal que lê o arquivo yaml de configuração dos vaults  
     e chama outras funções correspondentes as configs encontradas  
+      
+    @param yaml_config_path  
+        path do arquivo de configuração dos vaults  
       
     @param obsidian_root
         diretório base onde todos os vaults ficam
@@ -154,7 +162,7 @@ def run(obsidian_root: Path, plugins_source: Path, themes_source: Path, all_snip
         shutil.copytree(src=obsidian_root, dst=destination, dirs_exist_ok=True)
 
     # ler o arquivo de configuração
-    with open("config.yaml", "r") as f:
+    with open(yaml_config_path, "r") as f:
         data = yaml.safe_load(f)
 
     # iterar pelo nome de cada vault presente no arquivo,
@@ -193,9 +201,12 @@ def run(obsidian_root: Path, plugins_source: Path, themes_source: Path, all_snip
         write_dot_obsidian_json(dot_obsidian=this_vault_dot, data_to_write=data_appearance, json_name="appearance.json")
         write_dot_obsidian_json(dot_obsidian=this_vault_dot, data_to_write=data_community_plugins, json_name="community-plugins.json")
 
-def generate_yaml_config(obsidian_root: Path, snippets_all: bool = True, default_theme_list: list[str] = None, default_plugin_list: list[str] = None):
+def generate_yaml_config(yaml_config_path: Path, obsidian_root: Path, snippets_all: bool = True, default_theme_list: list[str] = None, default_plugin_list: list[str] = None):
     """
     gera um arquivo yaml de config listando todos os vaults disponíveis no obsidian_root  
+      
+    @param yaml_config_path  
+        path do arquivo de configuração dos vaults  
       
     @param obsidian_root  
         onde todos os vaults estão  
@@ -223,18 +234,18 @@ def generate_yaml_config(obsidian_root: Path, snippets_all: bool = True, default
         vaults.append(v.name)
 
     # criar o dicionário vazio pra cada vault
-    data = {}
+    info = {}
     for this_vault in vaults:
         options = {
             "plugins": None if not default_plugin_list else default_plugin_list,
             "themes": None if not default_theme_list else default_theme_list,
             "snippets": None if not snippets_all else ["all"],
         }
-        data[this_vault] = options
+        info[this_vault] = options
 
     # escrever o arquivo yaml final
-    with open("config.yaml", "w") as f:
-        yaml.dump(data, f)
+    with open(yaml_config_path, "w") as f:
+        yaml.dump(info, f)
 
 def write_dot_obsidian_json(data_to_write, dot_obsidian: Path, json_name: str):
     """
@@ -259,5 +270,9 @@ def write_dot_obsidian_json(data_to_write, dot_obsidian: Path, json_name: str):
     
     print(f"{dot_obsidian.parent.name}: {json_name} escrito")
 
-#generate_yaml_config(obsidian_root=ALL_VAULTS, default_theme_list=["Crying Obsidian"], default_plugin_list=["iconic"], snippets_all=True)
-run(obsidian_root=TEST_VAULTS, plugins_source=ALL_PLUGINS, themes_source=ALL_THEMES, all_snippets_source=ALL_SNIPPETS, special_snippets_source=SPECIAL_SNIPPETS)
+if __name__ == "__main__":
+    #generate_yaml_config(yaml_config_path=YAML_CONFIG, obsidian_root=ALL_VAULTS, default_theme_list=["Crying Obsidian"], default_plugin_list=["iconic"], snippets_all=True)
+    run(
+        yaml_config_path=YAML_CONFIG, obsidian_root=ALL_VAULTS,
+        plugins_source=ALL_PLUGINS, themes_source=ALL_THEMES, all_snippets_source=ALL_SNIPPETS, special_snippets_source=SPECIAL_SNIPPETS
+    )
