@@ -5,6 +5,11 @@ import apply
 import main
 
 def update_iconic_rules(persistent_data_dir: Path, obsidian_root: Path):
+    """
+    sobreescreve o arquivo */.obsidian/plugins/iconic/data.json  
+    adicionando regras padronizadas
+    """
+
     rules = persistent_data_dir / "iconic_data.json"
     if not rules.exists():
         return
@@ -13,6 +18,7 @@ def update_iconic_rules(persistent_data_dir: Path, obsidian_root: Path):
         contents = json.load(f)
     
     for vault in obsidian_root.iterdir():
+        # montar os caminhos necessários
         if vault.name.startswith("."):
             continue
 
@@ -28,6 +34,7 @@ def update_iconic_rules(persistent_data_dir: Path, obsidian_root: Path):
             print(f"{vault.name}: {iconic_data} não é um arquivo data.json válido")
             continue
         
+        # sobreescrever as regras anteriores
         with open(iconic_data, "w") as f:
             json.dump(contents, f, indent=4)
         
