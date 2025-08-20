@@ -90,3 +90,28 @@ def apply_theme(target_vault: Path, theme_dir: Path):
     )
 
     print(f"{target_vault.name}: tema {theme_dir.name} aplicado")
+
+def apply_plugin(target_vault: Path, plugin_dir: Path):
+    """
+    copiar o diretório de um plugin pra um vault
+    """
+
+    # ignorar plugins que não são diretórios ou não têm manifesto
+    if not plugin_dir.is_dir() or not Path(plugin_dir / "manifest.json").exists():
+        print("plugins inválido")
+        return
+
+    # montar o caminho do diretório e copiar
+    dir_plugins = get_sub_dot(target_vault, "plugins")
+    if not dir_plugins:
+        return
+
+    destination = dir_plugins / plugin_dir.name
+
+    shutil.copytree(
+        src=plugin_dir,
+        dst=destination,
+        dirs_exist_ok=True # sobreescrever caso o plugin já exista
+    )
+
+    print(f"{target_vault.name}: plugin {plugin_dir.name} aplicado")

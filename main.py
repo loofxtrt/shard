@@ -28,7 +28,104 @@ DEFAULT_APPEARANCE = {
 }
 DEFAULT_COMMUNITY_PLUGINS = []
 
-def run(obsidian_root: Path, themes_source: Path, all_snippets_source: Path, special_snippets_source: Path):
+def apply_all_snippets(full_vault_path: Path, vault_name: str, vault_config: list, all_snippets_source: Path, special_snippets_source: Path, data_appearance_instance: dict):
+    """
+    aplicar os snippets e adiciona-los a config  
+    no array de snippets da config, se "all" estiver presente, vai ser a aplicação de todos os snippets globais  
+    se "special" estiver presente, vai aplicar os snippets específicos pra aquele vault  
+    e se for uma listagem de nomes individuais, eles serão adicionados um por um  
+          
+    @param full_vault_path  
+        caminho do vault onde o snippet deve ser aplicado  
+      
+    @param vault_name, vault_config  
+        valores obtidos pela função run ao ler o config.yaml  
+        vault_name é a chave e vault_config é o valor dessa chave contendo todas as listas necessárias  
+        (themes, plugins, snippets etc.)  
+      
+    @param all_snippets_source, special_snippets_source  
+        de onde a func deve pegar os snippets globais e específicos de vaults  
+        melhor explicado na documentação da função run  
+      
+    @param data_appearance_instance  
+        cópia do diciońario que representa o data_appearance.json, copiado pela função run
+    """
+
+    def wrap_snippet_apply(snippet_name: str, snippet_source: Path):
+        """
+        @param snippet_name  
+            o nome do arquivo css (com ou sem .css)  
+            
+        @param snippet_source  
+            um dos dois paths que foram passados pra função principal  
+            (all_snippets_source e special_snippets_source)
+        """
+        
+        # IMPORTANTE: no appearance.json, o snippet não deve ter .css no final
+        # mas a extensão deve ser mantida pra função de apply_snippet não falhar
+        s_stem = snippet_name.replace(".css", "")
+
+        data_appearance_instance["enabledCssSnippets"].append(s_stem)
+        apply.apply_snippet(full_vault_path, snippet_source / snippet_name)
+
+    snippets = vault_config.get("snippets") or []
+    if "all" in snippets:
+        # obter todos os arquivos que terminam em .css
+        for css_file in all_snippets_source.glob("*.css"):
+            wrap_snippet_apply(snippet_name=css_file.name, snippet_source=all_snippets_source)
+    else:
+        # obter o nome de todos os snippets listados na config
+        for s_name in snippets:
+            if not s_name.endswith(".css"):
+                s_name += ".css"
+            wrap_snippet_apply(snippet_name=s_name, snippet_source=all_snippets_source)
+    
+    if "special" in snippets:
+        # aplicar os snippets específicos pra um vault só
+        for css_file in special_snippets_source.glob("*.css"):
+            if css_file.name.startswith(vault_name):
+                wrap_snippet_apply(snippet_name=css_file.name, snippet_source=special_snippets_source)
+
+def apply_all_themes(full_vault_path: Path, vault_config: list, themes_source: Path, data_appearance_instance: dict):
+    """
+    aplicar todos os temas e adiciona-los a config  
+    essa função tem explicação de parâmetros limitada porque alguns já foram explicados em apply_all_snippets  
+      
+    @param vault_config  
+        dicionário obtido pela função run que contém a lista "themes"  
+        é necessário apenas a config, e não o nome como na apply_all_snippets,  
+        porque não existem plugins que só servem pra um vault com nome específico  
+      
+    @param themes_source  
+        de onde a função deve pegar os temas pra copiar  
+    """
+    
+    # aplicar os temas e adiciona-los a config
+    # (com enumerate pra saber qual ativar)
+    for i, theme_name in enumerate(vault_config["themes"] or []):
+        # caso o tema seja o primeiro da lista, ele vai ser o ativo por padrão
+        if i == 0:
+            data_appearance_instance["cssTheme"] = theme_name
+        apply.apply_theme(full_vault_path, themes_source / theme_name)
+
+def apply_all_plugins(full_vault_path: Path, vault_config: list, plugins_source: Path, data_community_plugins_instance: list):
+    """
+    aplica todos os temas e os adiciona ao array do community-plugins.json  
+    explicação de parâmetros limitada por explicação já existente em apply_all_themes  
+      
+    @param plugins_source  
+        de onde a função vai pegar os temas pra copiar  
+      
+    @param data_community_plugins_instance  
+        cópia do array que representa esse arquivo de configuração, copiado pela função run
+    """
+
+    plugins = vault_config.get("plugins") or []
+    for p_name in plugins:
+        data_community_plugins_instance.append(p_name)
+        apply.apply_plugin(full_vault_path, plugins_source / p_name)
+
+def run(obsidian_root: Path, plugins_source: Path, themes_source: Path, all_snippets_source: Path, special_snippets_source: Path):
     """
     função principal que lê o arquivo yaml de configuração dos vaults  
     e chama outras funções correspondentes as configs encontradas  
@@ -36,9 +133,9 @@ def run(obsidian_root: Path, themes_source: Path, all_snippets_source: Path, spe
     @param obsidian_root
         diretório base onde todos os vaults ficam
       
-    @param all_snippets_source, themes_source
-        de onde a func deve pegar os snippets/temas. é de lá que eles serão copiados  
-        pra dentro do vault  
+    @param all_snippets_source, plugins_source, themes_source  
+        de onde a func deve pegar os snippets/temas/plugins
+        é de lá que eles serão copiados pra dentro do vault  
       
     @param special_snippets_source  
         de onde a func deve pegar os snippets específicos de vaults  
@@ -61,62 +158,32 @@ def run(obsidian_root: Path, themes_source: Path, all_snippets_source: Path, spe
         # gerar configurações base
         data_app = DEFAULT_APP.copy()
         data_appearance = DEFAULT_APPEARANCE.copy()
+        data_community_plugins = DEFAULT_COMMUNITY_PLUGINS.copy()
         
-        # aplicar os snippets e adiciona-los a config
-        # pode ser uma aplicação de todos caso "all" esteja presente no array de snippets da config
-        # ou apenas de alguns específicos caso contrário
-        def wrap_snippet_apply(snippet_name: str, snippet_source: Path):
-            """
-            @param snippet_name  
-                o nome do arquivo css (com ou sem .css)  
-              
-            @param snippet_source  
-                um dos dois paths que foram passados pra função principal  
-                (all_snippets_source e special_snippets_source)
-            """
+        # aplicar snippets, temas e plugins
+        apply_all_snippets(
+            full_vault_path=path_current_vault, vault_name=vault_name, vault_config=vault_config,
+            all_snippets_source=all_snippets_source, special_snippets_source=special_snippets_source, data_appearance_instance=data_appearance
+        )
 
-            print(f"requisição de apply: {snippet_name}")
+        apply_all_themes(
+            full_vault_path=path_current_vault, vault_config=vault_config,
+            themes_source=themes_source, data_appearance_instance=data_appearance
+        )
 
-            # IMPORTANTE: no appearance.json, o snippet não deve ter .css no final
-            # mas a extensão deve ser mantida pra função de apply_snippet não falhar
-            s_stem = snippet_name.replace(".css", "")
-
-            data_appearance["enabledCssSnippets"].append(s_stem)
-            apply.apply_snippet(path_current_vault, snippet_source / snippet_name)
-
-        snippets = vault_config.get("snippets") or []
-        if "all" in snippets:
-            # obter todos os arquivos que terminam em .css
-            for css_file in all_snippets_source.glob("*.css"):
-                wrap_snippet_apply(snippet_name=css_file.name, snippet_source=all_snippets_source)
-        else:
-            # obter o nome de todos os snippets listados na config
-            for s_name in snippets:
-                if not s_name.endswith(".css"):
-                    s_name += ".css"
-                wrap_snippet_apply(snippet_name=s_name, snippet_source=all_snippets_source)
-        
-        if "special" in snippets:
-            # também aplicar os snippets específicos pra um vault só
-            for css_file in special_snippets_source.glob("*.css"):
-                if css_file.name.startswith(vault_name):
-                    wrap_snippet_apply(snippet_name=css_file.name, snippet_source=special_snippets_source)
-
-        # aplicar os temas e adiciona-los a config
-        # (com enumerate pra saber qual ativar)
-        for i, theme_name in enumerate(vault_config["themes"] or []):
-            # caso o tema seja o primeiro da lista, ele vai ser o ativo por padrão
-            if i == 0:
-                data_appearance["cssTheme"] = theme_name
-            apply.apply_theme(path_current_vault, themes_source / theme_name)
+        apply_all_plugins(
+            full_vault_path=path_current_vault, vault_config=vault_config,
+            plugins_source=plugins_source, data_community_plugins_instance=data_community_plugins
+        )
         
         # escrever os arquivos de configuração do obsidian pro vault
         this_vault_dot = apply.get_dot_obsidian(path_current_vault)
 
         write_dot_obsidian_json(dot_obsidian=this_vault_dot, data_to_write=data_app, json_name="app.json")
         write_dot_obsidian_json(dot_obsidian=this_vault_dot, data_to_write=data_appearance, json_name="appearance.json")
+        write_dot_obsidian_json(dot_obsidian=this_vault_dot, data_to_write=data_community_plugins, json_name="community-plugins.json")
 
-def generate_yaml_config(obsidian_root: Path, snippets_all: bool = True, default_theme_list: list[str] = None):
+def generate_yaml_config(obsidian_root: Path, snippets_all: bool = True, default_theme_list: list[str] = None, default_plugin_list: list[str] = None):
     """
     gera um arquivo yaml de config listando todos os vaults disponíveis no obsidian_root  
       
@@ -127,7 +194,10 @@ def generate_yaml_config(obsidian_root: Path, snippets_all: bool = True, default
         definir se por padrão todos os vaults vão ter os mesmos snippets ativos  
       
     @param default_theme_list  
-        definir os temas padrão de todos os vaults
+        definir os temas padrão de todos os vaults  
+      
+    @param default_plugin_list  
+        definir os plugins padrão de todos os vaults
     """
 
     # ESSA FUNÇÃO ATUALMENTE SOBREESCREVE O YAML, RESETANDO ELE
@@ -146,8 +216,9 @@ def generate_yaml_config(obsidian_root: Path, snippets_all: bool = True, default
     data = {}
     for this_vault in vaults:
         options = {
+            "plugins": None if not default_plugin_list else default_plugin_list,
             "themes": None if not default_theme_list else default_theme_list,
-            "snippets": None if not snippets_all else ["all"]
+            "snippets": None if not snippets_all else ["all"],
         }
         data[this_vault] = options
 
@@ -178,5 +249,5 @@ def write_dot_obsidian_json(data_to_write, dot_obsidian: Path, json_name: str):
     
     print(f"{dot_obsidian.parent.name}: {json_name} escrito")
 
-#generate_yaml_config(obsidian_root=ALL_VAULTS, default_theme_list=["Crying Obsidian"], snippets_all=True)
-run(obsidian_root=TEST_VAULTS, themes_source=ALL_THEMES, all_snippets_source=ALL_SNIPPETS, special_snippets_source=SPECIAL_SNIPPETS)
+#generate_yaml_config(obsidian_root=ALL_VAULTS, default_theme_list=["Crying Obsidian"], default_plugin_list=["iconic"], snippets_all=True)
+run(obsidian_root=TEST_VAULTS, plugins_source=ALL_PLUGINS, themes_source=ALL_THEMES, all_snippets_source=ALL_SNIPPETS, special_snippets_source=SPECIAL_SNIPPETS)
