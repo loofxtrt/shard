@@ -19,6 +19,8 @@ if [[ $plugin_name == "accdiv" ]]; then
 fi
 
 if [[ $plugin_name == "iconic-mod" ]]; then
+    # ESSE SCRIPT SOBREESCREVE ÍCONES CONFIGURADOS MANUALMENTE
+
     cd "$OBSIDIAN_ROOT" || exit
 
     # loop por cada vault
