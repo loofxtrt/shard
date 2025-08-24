@@ -29,6 +29,52 @@
   "fileRules": [],
   "folderRules": [
     {
+      "id": "7yUa4",
+      "name": "with-sub-directories",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "tree",
+          "operator": "!contains",
+          "value": "/"
+        },
+        {
+          "source": "icon",
+          "operator": "!hasValue"
+        },
+        {
+          "source": "name",
+          "operator": "!startsWith",
+          "value": "_"
+        }
+      ],
+      "enabled": true,
+      "icon": "lucide-folders"
+    },
+    {
+      "id": "H5w7d",
+      "name": "no-sub-directories",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "tree",
+          "operator": "contains",
+          "value": "/"
+        },
+        {
+          "source": "icon",
+          "operator": "!hasValue"
+        },
+        {
+          "source": "name",
+          "operator": "!startsWith",
+          "value": "_"
+        }
+      ],
+      "enabled": true,
+      "icon": "lucide-folder"
+    },
+    {
       "id": "SB88T",
       "name": "attachments",
       "match": "all",
